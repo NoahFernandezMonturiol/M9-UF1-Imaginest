@@ -20,6 +20,14 @@
 			$message = 'Sorry, those credentials do not match';
 		} else if(password_verify($_POST['pass'],$results['passHash'])){
 			$_SESSION['user_id'] = $results['iduser'];
+
+			//Actualitzar el valor de lastsignin
+			$con = "UPDATE users SET lastSignIn = CURRENT_TIMESTAMP WHERE mail = :mail OR username = :mail";
+			$records = $db->prepare($con);
+			$records->bindParam(':mail', $_POST['UserOrMail']);
+			$records->execute();
+
+			//Redirigir a home.php
 			header("Location: home.php");
 		} else {
 			$messageErr = 'Sorry, those credentials do not match';
