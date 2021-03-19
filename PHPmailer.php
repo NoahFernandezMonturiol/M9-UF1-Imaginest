@@ -5,7 +5,6 @@
     //if() {
 
         require 'vendor/autoload.php';
-        //require 'C:/Users/slast/xampp/phpMyAdmin/vendor/autoload.php';
         $mail = new PHPMailer();
         $mail->IsSMTP();
 
@@ -24,7 +23,7 @@
         //Dades del correu electrònic
         $mail->SetFrom('nmonturiol2021@educem.net','Imaginest');
         $mail->Subject = 'Activate your account, '. $_POST['fname'];
-        $mail->MsgHTML('<img src="https://i.imgur.com/gIxVwMZ.png" width="264" height="163">'.'<br>'.'Dear '.$_POST['fname'].', please activate your account using this link: <br> <a href="http://localhost/M9-UF1-P3/PHPmailer.php?codi='.$valorRand.'&mail='.$_POST['mail'].'">Activate now!</a>');
+        $mail->MsgHTML('<img src="https://i.imgur.com/gIxVwMZ.png" width="264" height="163">'.'<br>'.'Dear '.$_POST['fname'].', please activate your account using this link: <br> <a href="http://localhost/M9-UF1-P3/mailCheckAccount.php?codi='.$valorRand.'&mail='.$_POST['mail'].'">Activate now!</a>');
         
         //Destinatari
         $address = $_POST['mail'];

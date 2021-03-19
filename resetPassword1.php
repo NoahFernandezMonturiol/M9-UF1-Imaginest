@@ -1,25 +1,77 @@
 <?php
+
 	session_start();
-	require 'connecta_db.php';
 
 	if (isset($_SESSION['user_id'])) {
-		$records = $db->prepare('SELECT iduser,mail,username,passHash FROM users WHERE iduser = :id');
-		$records->bindParam(':id', $_SESSION['user_id']);
-		$records->execute();
-		$results = $records->fetch(PDO::FETCH_ASSOC);
+		header('Location: /home.php');
+	}
 
-		$user = null;
+	use PHPMailer\PHPMailer\PHPMailer;
+	require 'connecta_db.php';
 
-		if (count($results) > 0) {
-			$user = $results;
+	if(isset($_POST['emailToSend']))
+    {
+        $sql=$db->prepare('SELECT mail from users where mail=:email or username=:email');
+        $sql->bindParam(':email',$_POST['emailToSend']);
+        if($sql->execute())
+        {
+            $valor=rand();
+            $valor=hash('sha256',$valor);
+            
+            $sql=$sql->fetch(PDO::FETCH_ASSOC);
+            $correu=$_POST['emailToSend'];
+
+            $minutes_to_add = 90;
+
+            $time = new DateTime();
+            $time->add(new DateInterval('PT' . $minutes_to_add . 'M'));
+
+            $hora = $time->format('Y-m-d H:i:s');
+
+            $sql = "UPDATE users set resetPassCode='$valor', resetPass=1, resetPassExpiry='$hora' where mail='$correu'";
+            $smt = $db->prepare($sql);
+            $smt->execute();
+
+            require 'vendor/autoload.php';
+            $mail = new PHPMailer();
+            $mail->IsSMTP();
+
+            $mail->SMTPDebug = 0;
+            $mail->SMTPAuth = true;
+            $mail->SMTPSecure = 'tls';
+            $mail->Host = 'smtp.gmail.com';
+            $mail->Port = 587;
+
+            //Credencials del compte GMAIL
+            $mail->Username = 'nmonturiol2021@educem.net';
+            $mail->Password = '_Asix@2021_';
+
+            //Dades del correu electrònic
+            $mail->SetFrom('nmonturiol2021@educem.net','Imaginest');
+            $mail->Subject = 'Reset your password, '.$correu;
+
+            $mail->MsgHTML('<img src="https://i.imgur.com/gIxVwMZ.png" width="264" height="163">'.'<br>Click this link to change your password: ' . '<a href="http://localhost/M9-UF1-P3/resetPassword2.php?code='.$valor.'&mail='.$correu.'">Change now!</a>');
+
+            //Destinatari
+            $address = $_POST['emailToSend'];
+			$mail->AddAddress($address , $correu);
+
+            //Enviament
+            $result = $mail->Send();
+			
+			$message = 'Please, check your email inbox to change your password.';
+        
+		} else {
+			$message = 'Sorry, this username or email does not exist in our database.';
 		}
 	}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Home | Imaginest™</title>
+	<title>Reset password | Imaginest™</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->
@@ -42,34 +94,43 @@
 	<link rel="stylesheet" type="text/css" href="vendor/daterangepicker/daterangepicker.css">
 <!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="css/util.css">
-	<link rel="stylesheet" type="text/css" href="css/mainHome.css">
+	<link rel="stylesheet" type="text/css" href="css/main.css">
 <!--===============================================================================================-->
 </head>
 <body>
 
-	<?php 
-	if(empty($user)) {
-		header("Location: index.php");
-	}
-	?>
-
 	<div class="limiter">
 		<div class="container-login100" style="background-image: url('images/bg-01.jpg');">
-			<div class="testDiv">
-				<p>Welcome, <?= $user['username']; ?></p>
-				<a class="login100-btn" href="./logout.php">Log Out</a>
-			</div>
-			<div>
-				<form action="uploadImage.php" method="post" enctype="multipart/form-data">
-					Select Image File to Upload:
-					<input type="file" name="file">
-					<input type="submit" name="submit" value="Upload">
+			<div class="wrap-login100 p-t-30 p-b-50">
+				<span class="login100-form-title p-b-41">
+					Reset password
+				</span>
+				
+				<form class="login100-form validate-form p-b-33 p-t-5" method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+					<div class="wrap-input100 validate-input" data-validate = "Enter username">
+						<input required class="input100" type="mail" name="emailToSend" placeholder="E-mail or username">
+						<span class="focus-input100" data-placeholder="&#xe818;"></span>
+					</div>
+
+					<div class="container-login100-form-btn m-t-32">
+						<a href="./index.php" style="font-size:35px; margin-top:-12px;">←</a>
+						<button class="login100-form-btn" type="submit">
+							Change password
+						</button>
+					</div>			
+
+					<?php if(!empty($message)): ?>
+      					<p> <?= $message ?></p>
+    				<?php endif; ?>
+
+					</div>
 				</form>
 			</div>
 		</div>
 	</div>
-	
-	<!--<div id="dropDownSelect1"></div>-->
+
+
+	<div id="dropDownSelect1"></div>
 
 <!--===============================================================================================-->
 	<script src="vendor/jquery/jquery-3.2.1.min.js"></script>
